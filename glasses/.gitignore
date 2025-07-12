@@ -1,0 +1,18 @@
+# ESP-IDF 构建目录
+build/
+
+# ESP-IDF 配置文件
+sdkconfig
+sdkconfig.old
+
+# Python 缓存（ESP-IDF 工具链会生成）
+__pycache__/
+*.pyc
+
+# ESP-IDF 分区表（如果是自动生成的）
+partition_table/
+
+# 固件文件（构建产物）
+*.bin
+*.elf
+*.map

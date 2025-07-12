@@ -1,0 +1,83 @@
+menu "Camera configuration"
+
+    config OV3660_SUPPORT
+        bool "Support OV3660 3MP"
+        default y
+        help
+            Enable this option if you want to use the OV3360.
+            Disable this option to save memory.
+
+    choice SCCB_HARDWARE_I2C_DRIVER_SELECTION
+        prompt "I2C driver selection for SCCB"
+        default SCCB_HARDWARE_I2C_DRIVER_NEW
+        help
+            Select the I2C driver to use for SCCB communication.
+
+        config SCCB_HARDWARE_I2C_DRIVER_LEGACY
+            bool "Legacy I2C driver"
+        config SCCB_HARDWARE_I2C_DRIVER_NEW
+            bool "New I2C driver"
+
+    endchoice
+
+    choice SCCB_HARDWARE_I2C_PORT
+        bool "I2C peripheral to use for SCCB"
+        default SCCB_HARDWARE_I2C_PORT1
+
+        config SCCB_HARDWARE_I2C_PORT0
+            bool "I2C0"
+        config SCCB_HARDWARE_I2C_PORT1
+            bool "I2C1"
+
+    endchoice
+
+    config SCCB_CLK_FREQ
+        int "SCCB clk frequency"
+        default 100000
+        range 100000 400000
+
+    config CAMERA_TASK_STACK_SIZE
+        int "CAM task stack size"
+        default 2048
+
+    config CAMERA_DMA_BUFFER_SIZE_MAX
+        int "DMA buffer size"
+        range 8192 32768
+        default 32768
+
+    # 添加JPEG模式帧大小配置
+    choice CAMERA_JPEG_MODE_FRAME_SIZE_OPTION
+        prompt "JPEG frame size calculation method"
+        default CAMERA_JPEG_MODE_FRAME_SIZE_AUTO
+        help
+            Choose how to calculate the JPEG frame buffer size.
+
+        config CAMERA_JPEG_MODE_FRAME_SIZE_AUTO
+            bool "Auto calculate based on resolution"
+            help
+                Automatically calculate frame size as width * height / 5
+
+        config CAMERA_JPEG_MODE_FRAME_SIZE_MANUAL
+            bool "Manual frame size"
+            help
+                Manually set the frame buffer size
+
+    endchoice
+
+    config CAMERA_JPEG_MODE_FRAME_SIZE
+        int "JPEG frame buffer size (bytes)"
+        depends on CAMERA_JPEG_MODE_FRAME_SIZE_MANUAL
+        default 32768
+        range 8192 262144
+        help
+            Size of the JPEG frame buffer in bytes. Should be large enough to hold a JPEG image.
+            For UXGA (1600x1200): recommend 32768-65536 bytes
+            For SVGA (800x600): recommend 16384-32768 bytes
+
+    config CAMERA_CONVERTER_ENABLED
+        bool "Enable camera RGB/YUV converter"
+        default n
+        help
+            Enable this option if you want to use RGB565/YUV422/YUV420/YUV411 format conversion.
+
+endmenu

@@ -1,0 +1,20 @@
+# IDE 配置文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 操作系统文件  
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+# 全局日志和临时文件
+*.log
+*.tmp
+*.temp
+
+# 编辑器备份文件
+*~
+.#*
