@@ -55,7 +55,7 @@ static camera_config_t camera_config = {
 
     // 图像配置
     .pixel_format = PIXFORMAT_JPEG,     // JPEG格式输出
-    .frame_size = FRAMESIZE_UXGA,       // 1600x1200分辨率
+    .frame_size = FRAMESIZE_SVGA,       // 1600x1200分辨率
     .jpeg_quality = 10,                 // JPEG质量 (0-63，数字越小质量越高)
     .fb_count = 2,                      // 双帧缓冲
     .fb_location = CAMERA_FB_IN_PSRAM,  // 帧缓冲存储在PSRAM中

@@ -9,8 +9,6 @@ sdkconfig.old
 __pycache__/
 *.pyc
 
-# ESP-IDF 分区表（如果是自动生成的）
-partition_table/
 
 # 固件文件（构建产物）
 *.bin
