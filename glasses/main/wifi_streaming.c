@@ -128,58 +128,123 @@ static esp_err_t stream_handler(httpd_req_t *req)
 // 主页处理 - 添加拍照功能
 static esp_err_t index_handler(httpd_req_t *req)
 {
-    const char html[] = 
-        "<!DOCTYPE html><html><head><title>ESP32 Camera</title>"
-        "<meta name='viewport' content='width=device-width,initial-scale=1'></head>"
-        "<body style='font-family:Arial;text-align:center;background:#222;color:white;padding:20px'>"
-        "<h1>📷 ESP32-S3 Smart Glasses</h1>"
-        "<p>域名访问: <b>http://esp32-glasses.local</b></p>"
-        
-        "<div style='margin:20px 0'>"
-        "<button onclick='capturePhoto()' style='padding:10px 20px;font-size:16px;background:#007bff;color:white;border:none;border-radius:5px;margin:10px'>📸 拍照</button>"
-        "<button onclick='location.reload()' style='padding:10px 20px;font-size:16px;background:#28a745;color:white;border:none;border-radius:5px;margin:10px'>🔄 刷新</button>"
-        "</div>"
-        
-        "<div style='margin:20px 0'>"
-        "<h3>🎥 实时视频流</h3>"
-        "<img id='videoStream' src='/stream' style='max-width:100%;border:2px solid white'>"
-        "</div>"
-        
-        "<div style='margin:20px 0'>"
-        "<h3>📸 拍照结果</h3>"
-        "<img id='photoResult' style='max-width:100%;border:2px solid white;display:none'>"
-        "<p id='photoInfo' style='color:#00ff88'></p>"
-        "</div>"
-        
-        "<div style='margin:20px 0'>"
-        "<a href='/stream' style='color:#00ff88'>直接视频流</a> | "
-        "<a href='/capture' style='color:#00ff88'>直接拍照</a> | "
-        "<a href='/info' style='color:#00ff88'>设备信息</a>"
-        "</div>"
-        
-        "<script>"
-        "function capturePhoto() {"
-        "  document.getElementById('photoInfo').textContent = '正在拍照...';"
-        "  fetch('/capture')"
-        "  .then(response => {"
-        "    if(response.ok) {"
-        "      const photoImg = document.getElementById('photoResult');"
-        "      photoImg.src = '/capture?' + new Date().getTime();"  // 添加时间戳避免缓存
-        "      photoImg.style.display = 'block';"
-        "      document.getElementById('photoInfo').textContent = '拍照成功！';"
-        "    } else {"
-        "      document.getElementById('photoInfo').textContent = '拍照失败！';"
-        "    }"
-        "  })"
-        "  .catch(() => {"
-        "    document.getElementById('photoInfo').textContent = '网络错误！';"
-        "  });"
-        "}"
-        "</script>"
-        "</body></html>";
+    const char* html_page = 
+    "<!DOCTYPE html>"
+    "<html>"
+    "<head>"
+    "<title>ESP32-S3 智能眼镜</title>"
+    "<meta name='viewport' content='width=device-width, initial-scale=1'>"
+    "<style>"
+    "body { font-family: Arial; text-align: center; background: #222; color: white; margin: 0; padding: 20px; }"
+    ".container { max-width: 800px; margin: 0 auto; }"
+    ".video-container { margin: 20px 0; border: 2px solid #444; border-radius: 10px; overflow: hidden; }"
+    "img { width: 100%; height: auto; display: block; }"
+    ".button { "
+    "  background: linear-gradient(45deg, #ff6b6b, #4ecdc4); "
+    "  color: white; border: none; padding: 15px 30px; margin: 10px; "
+    "  border-radius: 25px; font-size: 18px; cursor: pointer; "
+    "  box-shadow: 0 4px 15px rgba(0,0,0,0.3); "
+    "  transition: transform 0.2s; "
+    "}"
+    ".button:hover { transform: translateY(-2px); }"
+    ".button:active { transform: translateY(0); }"
+    ".status { margin: 20px; padding: 10px; background: #333; border-radius: 5px; }"
+    ".info { font-size: 14px; color: #888; margin-top: 20px; }"
+    "</style>"
+    "</head>"
+    "<body>"
+    "<div class='container'>"
+    "<h1>🤓 ESP32-S3 智能眼镜</h1>"
     
+    "<div class='video-container'>"
+    "<img id='stream' src='/stream' alt='实时视频流'>"
+    "</div>"
+    
+    "<div>"
+    "<button class='button' onclick='capturePhoto()'>📸 拍照下载</button>"
+    "<button class='button' onclick='refreshStream()'>🔄 刷新视频</button>"
+    "</div>"
+    
+    "<div class='status' id='status'>状态：正常运行</div>"
+    
+    "<div class='info'>"
+    "<p>📱 访问地址：<strong>http://esp32-glasses.local</strong></p>"
+    "<p>🎥 视频流：<a href='/stream' style='color:#4ecdc4'>/stream</a></p>"
+    "<p>📸 拍照：<a href='/capture' style='color:#4ecdc4'>/capture</a></p>"
+    "<p>ℹ️ 信息：<a href='/info' style='color:#4ecdc4'>/info</a></p>"
+    "</div>"
+    "</div>"
+    
+    "<script>"
+    "let photoCount = 0;"
+    
+    // 拍照函数 - 直接下载
+    "function capturePhoto() {"
+    "  console.log('开始拍照...');"
+    "  "
+    "  // 更新状态"
+    "  document.getElementById('status').innerHTML = '📸 正在拍照...';"
+    "  document.getElementById('status').style.background = '#444';"
+    "  "
+    "  // 创建隐藏的下载链接"
+    "  const downloadLink = document.createElement('a');"
+    "  downloadLink.href = '/capture';"
+    "  downloadLink.style.display = 'none';"
+    "  document.body.appendChild(downloadLink);"
+    "  "
+    "  // 触发下载"
+    "  downloadLink.click();"
+    "  "
+    "  // 清理"
+    "  document.body.removeChild(downloadLink);"
+    "  "
+    "  // 更新计数和状态"
+    "  photoCount++;"
+    "  setTimeout(() => {"
+    "    document.getElementById('status').innerHTML = `✅ 照片已下载 (第${photoCount}张)`;"
+    "    document.getElementById('status').style.background = '#0a5d0a';"
+    "  }, 1000);"
+    "  "
+    "  setTimeout(() => {"
+    "    document.getElementById('status').innerHTML = '状态：正常运行';"
+    "    document.getElementById('status').style.background = '#333';"
+    "  }, 3000);"
+    "}"
+    
+    // 刷新视频流
+    "function refreshStream() {"
+    "  console.log('刷新视频流...');"
+    "  const img = document.getElementById('stream');"
+    "  const currentSrc = img.src;"
+    "  img.src = '';"
+    "  setTimeout(() => {"
+    "    img.src = currentSrc + '?t=' + new Date().getTime();"
+    "  }, 100);"
+    "  "
+    "  document.getElementById('status').innerHTML = '🔄 视频流已刷新';"
+    "  setTimeout(() => {"
+    "    document.getElementById('status').innerHTML = '状态：正常运行';"
+    "  }, 2000);"
+    "}"
+    
+    // 自动刷新状态
+    "setInterval(() => {"
+    "  if (document.getElementById('status').innerHTML === '状态：正常运行') {"
+    "    const now = new Date();"
+    "    const timeStr = now.toLocaleTimeString();"
+    "    // 这里可以添加更多状态信息"
+    "  }"
+    "}, 5000);"
+    
+    // 页面加载完成
+    "console.log('ESP32智能眼镜控制面板加载完成');"
+    "console.log('拍照将直接下载到设备');"
+    "</script>"
+    "</body>"
+    "</html>";
+
     httpd_resp_set_type(req, "text/html");
-    return httpd_resp_send(req, html, strlen(html));
+    return httpd_resp_send(req, html_page, strlen(html_page));
 }
 
 // 单张图片获取处理
@@ -187,10 +252,9 @@ static esp_err_t capture_handler(httpd_req_t *req)
 {
     camera_fb_t *fb = NULL;
     esp_err_t res = ESP_OK;
+    static uint32_t photo_counter = 0;  // 静态计数器，每次调用自动递增
+    ESP_LOGI(TAG, "📸 收到拍照请求");
     
-    ESP_LOGI(TAG, "📸 收到图片获取请求");
-    
-    // 获取一帧图像
     fb = esp_camera_fb_get();
     if (!fb) {
         ESP_LOGE(TAG, "❌ 获取图片失败");
@@ -198,18 +262,25 @@ static esp_err_t capture_handler(httpd_req_t *req)
         return ESP_FAIL;
     }
     
-    // 设置响应头
+    // 使用计数器生成文件名（更简单可靠）
+    char filename[48];
+    photo_counter++;
+    snprintf(filename, sizeof(filename), "ESP32_Glasses_%04lu.jpg", photo_counter);
+    
+    // 设置HTTP响应头，触发浏览器下载
+    char content_disposition[80];
+    snprintf(content_disposition, sizeof(content_disposition), 
+             "attachment; filename=\"%s\"", filename);
+    
     httpd_resp_set_type(req, "image/jpeg");
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");  // 允许跨域
+    httpd_resp_set_hdr(req, "Content-Disposition", content_disposition);  // ← 关键：触发下载
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
     httpd_resp_set_hdr(req, "Cache-Control", "no-cache");
     
     // 发送图片数据
     res = httpd_resp_send(req, (const char *)fb->buf, fb->len);
     
-    // 记录信息
-    ESP_LOGI(TAG, "📷 发送图片: %d bytes, %dx%d", fb->len, fb->width, fb->height);
-    
-    // 释放帧缓冲
+    ESP_LOGI(TAG, "📷 照片已发送下载: %s (%d bytes)", filename, fb->len);
     esp_camera_fb_return(fb);
     
     return res;
